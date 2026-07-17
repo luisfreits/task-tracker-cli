@@ -93,56 +93,97 @@ function showMenu() {
 }
 
 function addTask() {
-    fs.readFile('./bin/tasks/tasks.json', function (err, data) {
-        if (err) throw err;
-        const jsonData = JSON.parse(data.toString());
-        let index = jsonData.length;
-        jsonData.push({
-            id: index,
-            description: "",
-            status: "",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        })
-        fs.writeFile("./bin/tasks/tasks.json", JSON.stringify(jsonData), 'utf8', (err) => {
-            if (err) {
-                console.error(err);
-            } else {
-                console.log("Task added successfully");
-            }
+    process.stdin.removeListener('keypress', handleKeyPress);
+    process.stdin.setRawMode(false);
+    let description;
+    rl.question("Descreva tarefa: ", (description) => {
+        fs.readFile('./bin/tasks/tasks.json', function (err, data) {
+            if (err) throw err;
+            const jsonData = JSON.parse(data.toString());
+            let index = jsonData.length;
+            jsonData.push({
+                id: index,
+                description: description,
+                status: "todo",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            })
+            fs.writeFile("./bin/tasks/tasks.json", JSON.stringify(jsonData), 'utf8', (err) => {
+                if (err) {
+                    console.error(err);
+                } else {
+                    console.log("Task added successfully");
+                    rl.question("Pressione enter", () => {
+                        process.stdin.setRawMode(true);
+                        process.stdin.on('keypress', handleKeyPress);
+                        console.clear();
+                        showMenu();
+                    });
+                }
+            })
         })
     })
+
+
 };
 
 function updateTask() {
-    fs.readFile('./bin/tasks/tasks.json', function (err, data) {
-        if (err) throw err;
-        const jsonData = JSON.parse(data.toString());
-        jsonData.splice(index, 1, updateContent) //arrumar dps, index/id
-        
-        fs.writeFile("./bin/tasks/tasks.json", JSON.stringify(jsonData), 'utf8', (err) => {
-            if (err) {
-                console.error(err);
-            } else {
-                console.log("Task updated successfully");
-            }
+    process.stdin.removeListener('keypress', handleKeyPress);
+    process.stdin.setRawMode(false);
+    rl.question("ID da tarefa: ", (index) => {
+        rl.question("Descreva tarefa: ", (description) => {
+            fs.readFile('./bin/tasks/tasks.json', function (err, data) {
+                if (err) throw err;
+                const jsonData = JSON.parse(data.toString());
+                const targetId = parseInt(index, 10);
+                const task = jsonData.find(t => t.id === targetId);
+                task.description = description;
+                task.updatedAt = new Date().toISOString();
+
+                fs.writeFile("./bin/tasks/tasks.json", JSON.stringify(jsonData), 'utf8', (err) => {
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        console.log("Task updated successfully");
+                        rl.question("Pressione enter", () => {
+                            process.stdin.setRawMode(true);
+                            process.stdin.on('keypress', handleKeyPress);
+                            console.clear();
+                            showMenu();
+                        });
+                    }
+                })
+            })
         })
     })
+
 };
 
-function deleteTask(index) {
-    fs.readFile('./bin/tasks/tasks.json', function (err, data) {
-        if (err) throw err;
-        const jsonData = JSON.parse(data.toString());
-        jsonData.splice(index, 1)
-        fs.writeFile("./bin/tasks/tasks.json", JSON.stringify(jsonData), 'utf8', (err) => {
-            if (err) {
-                console.error(err);
-            } else {
-                console.log("Task deleted successfully");
-            }
+function deleteTask() {
+    process.stdin.removeListener('keypress', handleKeyPress);
+    process.stdin.setRawMode(false);
+    rl.question("ID da tarefa: ", (index) => {
+        fs.readFile('./bin/tasks/tasks.json', function (err, data) {
+            if (err) throw err;
+            const jsonData = JSON.parse(data.toString());
+            const targetId = parseInt(index, 10);
+            const updatedData = jsonData.filter(t => t.id !== targetId);
+            fs.writeFile("./bin/tasks/tasks.json", JSON.stringify(updatedData), 'utf8', (err) => {
+                if (err) {
+                    console.error(err);
+                } else {
+                    console.log("Task deleted successfully");
+                    rl.question("Pressione enter", () => {
+                        process.stdin.setRawMode(true);
+                        process.stdin.on('keypress', handleKeyPress);
+                        console.clear();
+                        showMenu();
+                    });
+                }
+            })
         })
     })
+
 
 };
 
